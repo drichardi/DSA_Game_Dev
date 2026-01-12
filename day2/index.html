@@ -53,13 +53,29 @@
                 setTimeout(() => setCopied(false), 2000);
             };
 
-            // Simple syntax highlighting (regex based for display only)
+            // IMPROVED: Single-pass syntax highlighting to prevent overlapping replacements
             const highlight = (text) => {
-                let html = text
-                    .replace(/(\/\/.*)/g, '<span class="token-comment">$1</span>')
-                    .replace(/\b(public|private|void|class|float|int|string|using|namespace|new|return)\b/g, '<span class="token-keyword">$1</span>')
-                    .replace(/\b(Debug|Vector3|Transform|GameObject|MonoBehaviour|Input|Time|Mathf)\b/g, '<span class="token-type">$1</span>')
-                    .replace(/("[^"]*")/g, '<span class="token-string">$1</span>');
+                // 1. Basic HTML Escape
+                const escaped = text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+
+                // 2. Combined Regex
+                // Group 1: Comments (Start with //)
+                // Group 2: Strings (Inside "")
+                // Group 3: Keywords
+                // Group 4: Unity Types
+                const pattern = /(\/\/.*)|("[^"]*")|\b(public|private|void|class|float|int|string|bool|using|namespace|new|return|var)\b|\b(Debug|Vector3|Transform|GameObject|MonoBehaviour|Input|Time|Mathf)\b/g;
+
+                const html = escaped.replace(pattern, (match, comment, string, keyword, type) => {
+                    if (comment) return `<span class="token-comment">${comment}</span>`;
+                    if (string) return `<span class="token-string">${string}</span>`;
+                    if (keyword) return `<span class="token-keyword">${keyword}</span>`;
+                    if (type) return `<span class="token-type">${type}</span>`;
+                    return match;
+                });
+
                 return { __html: html };
             };
 
