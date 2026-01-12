@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 1 | Class 2: Architecture & Lifecycle</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        
+        .lifecycle-arrow::after {
+            content: '↓';
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #64748b;
+            font-size: 20px;
+        }
+        .last-arrow::after { content: ''; }
+
+        /* Syntax Highlighting Colors */
+        .token-keyword { color: #c678dd; } /* Purple */
+        .token-type { color: #e5c07b; }    /* Yellow */
+        .token-fn { color: #61afef; }      /* Blue */
+        .token-string { color: #98c379; }  /* Green */
+        .token-comment { color: #7f848e; font-style: italic; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 selection:bg-purple-500 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- COMPONENTS ---
+
+        const Icon = ({ name, className }) => <i className={`fas fa-${name} ${className}`}></i>;
+
+        const CodeBlock = ({ code, title, badge }) => {
+            const [copied, setCopied] = useState(false);
+
+            const handleCopy = () => {
+                navigator.clipboard.writeText(code);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            // Simple syntax highlighting (regex based for display only)
+            const highlight = (text) => {
+                let html = text
+                    .replace(/(\/\/.*)/g, '<span class="token-comment">$1</span>')
+                    .replace(/\b(public|private|void|class|float|int|string|using|namespace|new|return)\b/g, '<span class="token-keyword">$1</span>')
+                    .replace(/\b(Debug|Vector3|Transform|GameObject|MonoBehaviour|Input|Time|Mathf)\b/g, '<span class="token-type">$1</span>')
+                    .replace(/("[^"]*")/g, '<span class="token-string">$1</span>');
+                return { __html: html };
+            };
+
+            return (
+                <div className="my-6 rounded-lg overflow-hidden border border-gray-700 bg-[#1e1e1e] shadow-xl">
+                    <div className="flex justify-between items-center px-4 py-2 bg-[#252526] border-b border-gray-700">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-gray-400 font-mono">{title}</span>
+                            {badge && <span className="text-[10px] uppercase tracking-wider bg-purple-900 text-purple-300 px-2 py-0.5 rounded border border-purple-700">{badge}</span>}
+                        </div>
+                        <button onClick={handleCopy} className="text-gray-400 hover:text-white transition-colors text-xs flex items-center gap-1">
+                            {copied ? <Icon name="check" className="text-green-500" /> : <Icon name="copy" />}
+                            {copied ? "Copied" : "Copy"}
+                        </button>
+                    </div>
+                    <div className="p-4 overflow-x-auto">
+                        <pre className="text-sm leading-relaxed text-gray-300" dangerouslySetInnerHTML={highlight(code)}></pre>
+                    </div>
+                </div>
+            );
+        };
+
+        const LifecycleNode = ({ name, desc, color }) => (
+            <div className="relative p-4 bg-gray-900 border border-gray-700 rounded-lg w-full md:w-48 text-center shadow-lg transform transition hover:scale-105 lifecycle-arrow mb-8 md:mb-0 md:mr-8 last:mb-0 md:last:mr-0 last-arrow">
+                <div className={`text-sm font-bold uppercase tracking-wider mb-1 ${color}`}>{name}</div>
+                <div className="text-xs text-gray-500">{desc}</div>
+            </div>
+        );
+
+        const Section = ({ title, icon, children, id }) => (
+            <section id={id} className="mb-16 scroll-mt-24">
+                <div className="flex items-center gap-3 mb-6 border-b border-gray-800 pb-2">
+                    <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-purple-400">
+                        <Icon name={icon} className="text-xl" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">{title}</h2>
+                </div>
+                {children}
+            </section>
+        );
+
+        const App = () => {
+            return (
+                <div className="min-h-screen flex flex-col md:flex-row">
+                    
+                    {/* Sidebar Nav */}
+                    <nav className="w-full md:w-64 bg-gray-900 border-r border-gray-800 p-6 md:h-screen md:sticky md:top-0 hidden md:block">
+                        <div className="mb-8">
+                            <h1 className="font-bold text-xl text-white">Unit 1</h1>
+                            <div className="text-purple-400 font-mono text-sm">Class 02</div>
+                        </div>
+                        <ul className="space-y-4 text-sm text-gray-400">
+                            <li><a href="#hook" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="plug" /> The Black Box</a></li>
+                            <li><a href="#lab1" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="microscope" /> Lab: Lifecycle</a></li>
+                            <li><a href="#encapsulation" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="shield-alt" /> Encapsulation</a></li>
+                            <li><a href="#deltatime" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="stopwatch" /> Game Loop</a></li>
+                            <li><a href="#challenge" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="rocket" /> Oscillator</a></li>
+                            <li><a href="#homework" className="hover:text-white flex items-center gap-2 transition-colors"><Icon name="home" /> Homework</a></li>
+                        </ul>
+                    </nav>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-6 md:p-12 max-w-5xl mx-auto">
+                        
+                        {/* Header */}
+                        <header className="mb-12">
+                            <div className="inline-block px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4">
+                                Accelerated Track
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Scripting & Architecture</h1>
+                            <p className="text-xl text-gray-400 leading-relaxed max-w-3xl">
+                                Today we stop writing code that runs "top to bottom" and start writing code that 
+                                <span className="text-white font-semibold"> listens</span>. We will master the Frame, the Loop, and the Inspector.
+                            </p>
+                        </header>
+
+                        {/* 1. The Hook */}
+                        <Section id="hook" title="The Hook: Event-Driven Architecture" icon="plug">
+                            <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700 mb-8">
+                                <p className="text-gray-300 mb-4">
+                                    In Python/Java, your `main()` function drives the program. In Unity, <strong>Unity drives the program</strong>.
+                                    You don't call `Start()`; Unity calls it for you. This is "Don't call us, we'll call you."
+                                </p>
+                                <div className="flex flex-col md:flex-row justify-between items-center mt-8 px-4">
+                                    <LifecycleNode name="Awake()" desc="Initialization (Self)" color="text-red-400" />
+                                    <LifecycleNode name="Start()" desc="Dependencies (Others)" color="text-orange-400" />
+                                    <LifecycleNode name="Update()" desc="Input & Logic (Every Frame)" color="text-blue-400" />
+                                    <LifecycleNode name="FixedUpdate()" desc="Physics Engine (0.02s)" color="text-green-400" />
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* 2. Lab: Lifecycle Logger */}
+                        <Section id="lab1" title="Lab: The Lifecycle Logger" icon="microscope">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-2">The Task</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-gray-400 mb-4">
+                                        <li>Create a script named <code>LifecycleLogger.cs</code>.</li>
+                                        <li>Add logs to the methods shown on the right.</li>
+                                        <li>Attach to a GameObject and hit Play.</li>
+                                        <li><strong className="text-white">Observation:</strong> Note the difference between "Console" order and "Time" order.</li>
+                                    </ul>
+                                    <div className="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-lg">
+                                        <h4 className="text-yellow-500 font-bold text-sm mb-1"><Icon name="lightbulb" /> Pro Tip</h4>
+                                        <p className="text-xs text-yellow-200/70">
+                                            If you attach this to TWO objects, which runs first? (Check Project Settings > Script Execution Order).
+                                        </p>
+                                    </div>
+                                </div>
+                                <CodeBlock 
+                                    title="LifecycleLogger.cs" 
+                                    code={`using UnityEngine;
+
+public class LifecycleLogger : MonoBehaviour
+{
+    void Awake()
+    {
+        Debug.Log("1. Awake: I am being loaded.");
+    }
+
+    void Start()
+    {
+        Debug.Log("2. Start: I am ready to begin.");
+    }
+
+    void Update()
+    {
+        // Careful! This runs 60+ times a second.
+        // Debug.Log("3. Update: Input check.");
+    }
+}`} 
+                                />
+                            </div>
+                        </Section>
+
+                        {/* 3. Encapsulation */}
+                        <Section id="encapsulation" title="Core Concept: Serialized Encapsulation" icon="shield-alt">
+                            <div className="space-y-6">
+                                <p className="text-gray-300">
+                                    Beginners make variables <code>public</code> to see them in the Inspector. This is bad architecture—it lets other scripts break your data.
+                                    The professional way is <code>[SerializeField] private</code>.
+                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="border border-red-900/50 bg-red-900/10 rounded-lg p-4">
+                                        <div className="flex justify-between mb-2">
+                                            <span className="text-red-400 font-bold text-sm">⛔ The "Newbie" Way</span>
+                                        </div>
+                                        <CodeBlock title="BadPractice.cs" code={`public class Player : MonoBehaviour {
+    // Other scripts can change this! 
+    // Unsafe.
+    public float speed = 10f; 
+}`} />
+                                    </div>
+
+                                    <div className="border border-green-900/50 bg-green-900/10 rounded-lg p-4">
+                                        <div className="flex justify-between mb-2">
+                                            <span className="text-green-400 font-bold text-sm">✅ The "Professional" Way</span>
+                                        </div>
+                                        <CodeBlock title="GoodPractice.cs" code={`public class Player : MonoBehaviour {
+    // Only Inspector can change this.
+    // Safe.
+    [SerializeField] private float _speed = 10f;
+}`} />
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-800 p-6 rounded-xl border-l-4 border-purple-500">
+                                    <h3 className="font-bold text-white mb-2">Activity: Solar System Refactor</h3>
+                                    <p className="text-gray-400 text-sm">
+                                        Return to your Solar System from Day 1. Create a <code>PlanetRotator</code> script. 
+                                        Use <code>[SerializeField]</code> to expose Rotation Speed and Rotation Axis so you can tune every planet individually from the Editor.
+                                    </p>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* 4. Game Loop */}
+                        <Section id="deltatime" title="Deep Dive: Time.deltaTime" icon="stopwatch">
+                            <div className="flex flex-col md:flex-row gap-8 items-start">
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-white mb-3">The Frame Rate Problem</h3>
+                                    <p className="text-gray-400 mb-4 text-sm leading-relaxed">
+                                        If you rotate 1 degree per frame:<br/>
+                                        • On a Gaming PC (144 fps) -> 144 degrees/sec.<br/>
+                                        • On a Laptop (30 fps) -> 30 degrees/sec.<br/>
+                                        <br/>
+                                        Your game speed depends on hardware. This is unacceptable.
+                                    </p>
+                                    <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-700/30">
+                                        <h4 className="text-blue-300 font-bold text-sm mb-2">The Solution</h4>
+                                        <p className="text-gray-300 font-mono text-sm">
+                                            Movement = Speed * Time.deltaTime
+                                        </p>
+                                        <p className="text-xs text-blue-200/60 mt-2">
+                                            deltaTime is "seconds since last frame". It gets smaller as FPS gets higher, perfectly cancelling out the speed difference.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="w-full md:w-1/2">
+                                    <CodeBlock title="FrameIndependentMovement.cs" code={`void Update() {
+    // Rotate around an axis
+    // speed * deltaTime = angle to move THIS frame
+    
+    transform.Rotate(
+        _rotationAxis * _speed * Time.deltaTime
+    );
+}`} />
+                                </div>
+                            </div>
+                        </Section>
+
+                         {/* 5. Challenge */}
+                         <Section id="challenge" title="Challenge: The Oscillator" icon="rocket">
+                            <div className="bg-gradient-to-r from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-8 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Icon name="wave-square" className="text-9xl text-white" />
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-bold text-white mb-4">Task: The Floating Crystal</h3>
+                                    <p className="text-gray-300 mb-6">
+                                        Create a script `Oscillator.cs` that makes an object float up and down gently using a Sine wave.
+                                    </p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h4 className="text-sm font-bold uppercase text-gray-500 tracking-wider mb-2">Requirements</h4>
+                                            <ul className="space-y-2 text-sm text-gray-400">
+                                                <li className="flex gap-2"><Icon name="check-square" className="text-green-500" /> Must use <code>Mathf.Sin()</code></li>
+                                                <li className="flex gap-2"><Icon name="check-square" className="text-green-500" /> <code>amplitude</code> and <code>frequency</code> must be serialized.</li>
+                                                <li className="flex gap-2"><Icon name="check-square" className="text-green-500" /> Must verify with <code>Time.time</code>.</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-black/30 rounded-lg p-4 font-mono text-xs text-green-400 border border-green-900/30">
+                                            // HINT:<br/>
+                                            float y = Mathf.Sin(Time.time * freq) * amp;<br/>
+                                            transform.position = startPos + new Vector3(0, y, 0);
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Section>
+
+                         {/* Homework */}
+                         <Section id="homework" title="Homework: The Clock" icon="home">
+                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-6 items-center">
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-white mb-2">Construct a Working Clock</h3>
+                                    <p className="text-gray-400 text-sm mb-4">
+                                        Build a clock with three hands (Hour, Minute, Second) that rotate at correct relative speeds.
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Use Time.deltaTime</span>
+                                        <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Parent/Child Hierarchy</span>
+                                    </div>
+                                </div>
+                                <div className="w-full md:w-auto bg-purple-900/20 border border-purple-500/30 p-4 rounded-lg">
+                                    <h4 className="text-purple-300 font-bold text-sm mb-1">Bonus Credit</h4>
+                                    <p className="text-xs text-gray-400">
+                                        Make it tell the actual real-world time using <br/><code>System.DateTime.Now</code>.
+                                    </p>
+                                </div>
+                            </div>
+                        </Section>
+
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
